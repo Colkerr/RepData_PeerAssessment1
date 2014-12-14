@@ -1,6 +1,6 @@
 #Investigate number of steps each five minutes through the day
 ##Read the raw data. 
-*Ignore missing data at the moment
+Ignore missing data at the moment
 ```{r}
 setwd("C:/Coursera/ReproduceResearch/Assign1/Data")
 #Source: https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip
@@ -13,7 +13,8 @@ sumDays <- aggregate(data$steps, by=list(c(data$date)),FUN=sum,na.rm=TRUE)
 colnames(sumDays) <- c("day","steps")
 hist(sumDays$steps,breaks=12,xlab="Number",main="Steps Distribution")
 ```
-*Show mean and median number of steps* 
+
+*Mean and median number of steps*
 ```{r}
 mean(sumDays$steps)
 median(sumDays$steps)
@@ -29,20 +30,37 @@ plot(meanInts$steps,type="l", xaxt = "n",
 labels <- seq(0,24,6) 
 labels.at <- seq(0,24*12,6*12)    #seq(0,2400,1200)
 axis(side=1, at=labels.at, labels = labels)
-#maximum average number of steps
-maxInt <- which(meanInts$steps==max(meanInts$steps),)
-#Maximum steps in 5 minutes 
-meanInts[maxInt,1]
+#Which interval has the most steps. Convert to time of day
+maxInt <- which(meanInts$steps==max(meanInts$steps),) 
+meanInts[maxInt,1]/100
+
 ```
-*Replace missing data with the mean value
+###Count missing values and replace with the mean value
 ```{r}
-#substitue NA with mean value
+#Missing intervals
+sum(is.na(data$steps))
+#Missing days
+sum(is.na(sumDays$steps))
+#substitue NA with mean value.
 meanStepsInt <- round(mean(data$steps,na.rm=T))
-meanStepsDay <- round(mean(sumDays$steps,na.rm=T))
 data$steps[is.na(data$steps)] <- meanStepsInt
 ```
+###Re-draw the histogram
+```{r}
+sumDays <- aggregate(data$steps, by=list(c(data$date)),FUN=sum,na.rm=TRUE)
+colnames(sumDays) <- c("day","steps")
+hist(sumDays$steps,breaks=12,xlab="Number",main="Steps Distribution")
+###Recalculate mean and median number of steps
+mean(sumDays$steps)
+median(sumDays$steps)
+```
+*The mean has increased because some observations have been increased
+by replacing mssing values with the mean value.
+The median has increased a little because days with few steps have gained
+more than days with many steps*
+
 ##Show separate stats for weekdays and weekends
-*Create a factor column for Weekend and weekday 
+*Create a factor column for weekend and weekday*
 ```{r}
 wkend <- weekdays(data$date,abbreviate=T) %in% c("Sat","Sun")
 data$dayType[wkend] <- "Weekend"
@@ -55,7 +73,7 @@ colnames(dataSum) <- c("interval","dayType","steps")
 ```{r}
 library(lattice)
 xyplot(
-  steps ~ interval | dayType
+  steps ~ interval/12 | dayType
   , data=dataSum
   , layout=c(1,2)
   , main="Average Steps ~ 5 min. interval"
@@ -64,3 +82,6 @@ xyplot(
   , type=c("l","l")
 )
 ```
+
+*There is slightly more activity in the morning around 8.30 on weekdays.
+The rest of the day has less activity than at a weekend.*
